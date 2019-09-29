@@ -14,22 +14,20 @@ export function getSingerList() {
     hostUin: 0,
     needNewCode: 0,
     platform: 'yqq',
-    g_tk: 1664029744
-    // timeStamp: new Date().getTime()
-    // g_tk: 5381,
-    // format: 'json',
-    // loginUin: 0,
+    // g_tk: 1664029744
 
   })
   console.log('歌手参数--',data)
 
-  // return jsonp(url, data, options)
+  return jsonp(url, data, options)
 
-  return axios.get(url,{
-    params: data
-  }).then((res) => {
-    return Promise.resolve(res.data)
-  })
+  // return axios.get(url,{
+  //   // withCredentials: true,
+  //   params: data
+  // }).then((res) => {
+  //   console.log('kfkfk--',res)
+  //   return Promise.resolve(res.data)
+  // })
 }
 
 export function getSingerDetail(singerId) {

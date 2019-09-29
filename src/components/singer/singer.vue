@@ -1,14 +1,23 @@
 <template>
-    <div class="singer" ref="singer"></div>
+    <div class="singer" ref="singer">
+      <list-view :data="singers"></list-view>
+    </div>
 </template>
 
 <script>
   import {getSingerList} from 'api/singer'
   import {ERR_OK} from 'api/config'
-  import axios from 'axios'
+  import Singer from 'common/js/singer'
+  import listView from 'base/listview/listview'
+
+  const HOT_SINGER_LEN = 10
+  const HOT_NAME = '热门'
 
   export default {
     name: 'singer',
+    components:{
+      listView
+    },
     data(){
       return{
         singers: [],
@@ -30,39 +39,63 @@
               this.singers = res.data.list
             }
             console.log('111',res.data.list)
-
+            this.singers = this._normalizeSinger(res.data.list)
           }catch(err){
             console.log(err)
           }
         })
 
-        // this.$axios.get({        //19.9.1
-        //   channel: 'singer',
-        //   page: 'list',
-        //   key: 'all_all_all',
-        //   pagesize: 100,
-        //   pagenum: 1,
-        //   hostUin: 0,
-        //   needNewCode: 0,
-        //   platform: 'yqq',
-        //   g_tk: 1664029744,
-        //   inCharset: 'utf-8',
-        //   outCharset: 'utf-8',
-        //   notice: 0,
-        //   format: 'jsonp'
-        // }).then((res) => {
-        //   console.log(res)
-        //   try{
-        //     console.log('111111')
-        //     if(res.code === ERR_OK){
-        //       console.log('111',res.data.list)
-        //       this.singers = res.data.list
-        //     }
-        //   }catch(err){
-        //     console.log(err)
-        //   }
-        // })
+      },
+      _normalizeSinger(list){
+        let map = {
+          hot: {
+            title: HOT_NAME,
+            items: [],
+          }
+        };
+        list.forEach((item,index) => {
+          if(index < HOT_SINGER_LEN){
+            map.hot.items.push(new Singer({
+              name: item.Fsinger_name,
+              id: item.Fsinger_mid
+            }))
+          }
+          const key = item.Findex;
+          if(!map[key]){
+            map[key] = {
+              title: key,
+              items: [],
+            }
+          }
+          map[key].items.push(new Singer({
+            name: item.Fsinger_name,
+            id: item.Fsinger_mid
+          }))
+        })
+        console.log('map--',map)
 
+        let hot =[],
+            ret = [],
+            numArr = [];
+        for(let key in map){
+          let val = map[key]
+          if(val.title.match(/[a-zA-Z]/)){
+            ret.push(val)
+          }else if(val.title === HOT_NAME){
+            hot.push(val)
+          }else if(val.title.match(/[0-9]/)){
+            numArr.push(val)
+          }
+        }
+        console.log('before sort--',ret,numArr)
+        ret.sort((a,b) => {
+          return a.title.charCodeAt(0) - b.title.charCodeAt(0)
+        })
+        numArr.sort((a,b) => {
+          return a.title.charCodeAt(0) - b.title.charCodeAt(0)
+        })
+        console.log(hot.concat(ret).concat(numArr))
+        return hot.concat(ret).concat(numArr)
       },
     },
   }
