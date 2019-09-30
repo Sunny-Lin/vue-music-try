@@ -7,21 +7,31 @@
             class="listview"
     >
       <ul>
-        <li v-for="group in data" class="list-group">
+        <li v-for="group in data" class="list-group" ref="listGroup">
           <h2 class="list-group-title">{{group.title}}</h2>
           <ul>
-            <li v-for="item in group.items" class="list-group-item">
+            <li v-for="item in group.items" @click="selItem(item)" class="list-group-item">
               <img v-lazy="item.avatar" class="avatar">
               <span class="name">{{item.name}}</span>
             </li>
           </ul>
         </li>
       </ul>
+<!--      shortList快速入口-->
+<!--      stop.prevent阻止冒泡：阻止外层scroll也滚动-->
+      <div class="list-shortcut" @touchstart.stop.prevent="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
+        <ul>
+          <li v-for="(item,index) in shortcutList" :data-index="index" class="item">{{item}}</li>
+        </ul>
+      </div>
     </Scroll>
 </template>
 
 <script>
   import Scroll from 'base/scroll/scroll'
+  import { getData } from 'common/js/dom'
+
+  const ANCHOR_HEIGHT = 18
 
   export default {
         name: "listview",
@@ -37,17 +47,81 @@
         created(){
           this.probeType = 3
           this.listenScroll = true
-          this.touch = {}
-          this.listHeight = []
+          this.touch = {};
+          this.listHeight = []      //存字母组每个歌手组的高度
+        },
+        computed:{
+          shortcutList(){
+            return this.data.map(group => {
+                return group.title.substr(0,1)
+            })
+          },
         },
         data(){
-          return{
+          return{}
+        },
+        methods:{
+          selItem(item){
+            this.$emit('select',item)
+          },
 
-          }
+          //快速入口touchstart事件
+          onShortcutTouchStart(e){
+            console.log('11111')
+            //获取dom上的'data-index'属性的值，得到点击的快捷入口item的index
+            let anchorIndex = getData(e.target,'index')
+            console.log('TouchStart index--',anchorIndex)
+            let firstTouch = e.touches[0];
+            this.touch.y1 = firstTouch.pageY;
+            this.touch.startIndex = anchorIndex;
+            this._scrollTo(anchorIndex)
+          },
+
+          //快速入口touchmove事件
+          onShortcutTouchMove(e){
+            let firstTouch = e.touches[0];
+            this.touch.y2 = firstTouch.pageY;
+            let delta = (this.touch.y2 - this.touch.y1) / ANCHOR_HEIGHT | 0     //或0转换为数字
+            let anchorIndex = this.touch.startIndex + delta
+            this._scrollTo(anchorIndex)
+          },
+
+
+          //滚动到字母对应的歌手组合区域
+          _scrollTo(index){
+            if(!index && index !== 0){
+              return
+            }
+            //往上回滚
+            else if(index < 0){
+              index = 0
+            }
+            //index是最后一个组的index
+            else if(index > this.listHeight.length - 2){
+              index =  this.listHeight.length - 2
+            }
+            this.$refs.listview.scrollToElement(this.$refs.listGroup[index],0)
+          },
+
+          _calculateHeight(data){
+            let list = this.$refs.listGroup;
+            let height = 0;
+            this.listHeight.push(height)
+
+            list.forEach((li,k) => {
+              if(k < list.length){
+                height += li.clientHeight;
+              }
+              this.listHeight.push(height)
+            })
+            console.log('listheight--',this.listHeight,this.listHeight.length)
+          },
         },
         watch:{
-          data(){
-
+          data(newVal){
+            this.$nextTick(() => {
+              this._calculateHeight(newVal);
+            })
           },
         },
     }

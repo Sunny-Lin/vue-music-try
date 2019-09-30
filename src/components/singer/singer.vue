@@ -1,6 +1,6 @@
 <template>
     <div class="singer" ref="singer">
-      <list-view :data="singers"></list-view>
+      <list-view :data="singers" @select=""></list-view>
     </div>
 </template>
 

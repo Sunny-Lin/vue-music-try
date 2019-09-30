@@ -12,3 +12,11 @@ export function addClass(el, className) {
   newClass.push(className)
   el.className = newClass.join(' ')
 }
+
+export function getData(el,name,val){
+  const prefix = 'data-';   //自定义属性前缀
+  if(val){
+    return el.setAttribute(prefix + name,val)
+  }
+  return el.getAttribute(prefix + name)
+}
