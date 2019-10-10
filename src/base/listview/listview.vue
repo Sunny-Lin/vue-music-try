@@ -3,7 +3,7 @@
             :listen-scroll="listenScroll"
             :probe-type="probeType"
             :data="data"
-            @scroll=""
+            @scroll="scroll"
             class="listview"
     >
       <ul>
@@ -58,7 +58,9 @@
           },
         },
         data(){
-          return{}
+          return{
+            scrollY: -1,
+          }
         },
         methods:{
           selItem(item){
@@ -100,10 +102,12 @@
             else if(index > this.listHeight.length - 2){
               index =  this.listHeight.length - 2
             }
+            //滚动后同步当前的scrollY
+            this.scrollY = -this.listHeight[index]
             this.$refs.listview.scrollToElement(this.$refs.listGroup[index],0)
           },
-
-          _calculateHeight(data){
+          //计算每一个快捷入口组的起始y位置，第一个是0
+          _calculateHeight(){
             let list = this.$refs.listGroup;
             let height = 0;
             this.listHeight.push(height)
@@ -115,6 +119,10 @@
               this.listHeight.push(height)
             })
             console.log('listheight--',this.listHeight,this.listHeight.length)
+          },
+          //滚动实时监听位置
+          scroll(pos){
+            this.scrollY = pos.y;
           },
         },
         watch:{
