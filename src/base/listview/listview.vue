@@ -21,8 +21,16 @@
 <!--      stop.prevent阻止冒泡：阻止外层scroll也滚动-->
       <div class="list-shortcut" @touchstart.stop.prevent="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
         <ul>
-          <li v-for="(item,index) in shortcutList" :data-index="index" class="item">{{item}}</li>
+          <li v-for="(item,index) in shortcutList"
+              :data-index="index"
+              class="item"
+              :class="{'current': currentIndex === index}"
+          >{{item}}</li>
         </ul>
+      </div>
+<!--      fix title-->
+      <div v-show="!data.length" class="loading-container">
+        <Loading></Loading>
       </div>
     </Scroll>
 </template>
@@ -30,13 +38,15 @@
 <script>
   import Scroll from 'base/scroll/scroll'
   import { getData } from 'common/js/dom'
+  import Loading from 'base/loading/loading'
 
   const ANCHOR_HEIGHT = 18
 
   export default {
         name: "listview",
         components: {
-          Scroll
+          Scroll,
+          Loading
         },
         props: {
           data: {
@@ -45,7 +55,7 @@
           }
         },
         created(){
-          this.probeType = 3
+          this.probeType = 3    //为了使滑动过程中，可以监听到派发的scroll事件的滚动位置
           this.listenScroll = true
           this.touch = {};
           this.listHeight = []      //存字母组每个歌手组的高度
@@ -60,6 +70,7 @@
         data(){
           return{
             scrollY: -1,
+            currentIndex: 0,
           }
         },
         methods:{
@@ -116,20 +127,48 @@
               if(k < list.length){
                 height += li.clientHeight;
               }
+              //listheight包括首尾
               this.listHeight.push(height)
             })
-            console.log('listheight--',this.listHeight,this.listHeight.length)
+            console.log('listheight--',this.listHeight.length,this.list.length,this.listHeight,)
           },
           //滚动实时监听位置
           scroll(pos){
             this.scrollY = pos.y;
+            console.log('实时滚动位置--',this.scrollY,pos.y)
           },
+
+          //、点击入口上下方要不能滚动
+          //scrollY变化，currentIndex
+          //title fix在顶部
+          //优化进入loading
+
         },
         watch:{
           data(newVal){
             this.$nextTick(() => {
               this._calculateHeight(newVal);
             })
+          },
+          //快速入口高亮，根据滑动距离得出落在的index范围
+          scrollY(newY){
+            //顶部上拉时
+            if(newY > 0){
+              this.currentIndex = 0;
+              return
+            }
+            //滚动在中间范围时 list 25 izou23
+            for(let i=0;i< this.listHeight.length - 1;i++){
+              let height1 = this.listHeight[i],
+                  height2 = this.listHeight[i+1];
+              if(-newY >= height1 && -newY < height2){
+                this.currentIndex = i
+                return;
+              }
+            }
+            //滚动在最底下超过最后一个的index时:
+            // -2是因为一开始push进去一个0，this.listHeight.length - 1是最后一个的下标，所以-2才是快速入口最后一个的下标
+            this.currentIndex = this.listHeight.length - 2;
           },
         },
     }
