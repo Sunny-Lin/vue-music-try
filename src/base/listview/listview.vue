@@ -29,6 +29,10 @@
         </ul>
       </div>
 <!--      fix title-->
+      <div class="list-fixed" v-show="fixedTitle" ref="fixed">
+        <div class="fixed-title">{{fixedTitle}}</div>
+      </div>
+<!--      loading-->
       <div v-show="!data.length" class="loading-container">
         <Loading></Loading>
       </div>
@@ -40,6 +44,7 @@
   import { getData } from 'common/js/dom'
   import Loading from 'base/loading/loading'
 
+  const TITLE_HEIGHT = 30
   const ANCHOR_HEIGHT = 18
 
   export default {
@@ -66,11 +71,19 @@
                 return group.title.substr(0,1)
             })
           },
+          fixedTitle(){
+            if(this.scrollY > 0){
+              return ''
+            }
+            return this.data[this.currentIndex] ? this.data[this.currentIndex].title : ''
+
+          },
         },
         data(){
           return{
             scrollY: -1,
             currentIndex: 0,
+            diff: -1,
           }
         },
         methods:{
@@ -130,7 +143,7 @@
               //listheight包括首尾
               this.listHeight.push(height)
             })
-            console.log('listheight--',this.listHeight.length,this.list.length,this.listHeight,)
+            console.log('listheight--',this.listHeight.length,list.length,this.listHeight,)
           },
           //滚动实时监听位置
           scroll(pos){
@@ -139,9 +152,9 @@
           },
 
           //、点击入口上下方要不能滚动
-          //scrollY变化，currentIndex
+          //scrollY变化，currentIndex    ok
           //title fix在顶部
-          //优化进入loading
+          //优化进入loading     ok
 
         },
         watch:{
@@ -152,23 +165,34 @@
           },
           //快速入口高亮，根据滑动距离得出落在的index范围
           scrollY(newY){
+            console.log('newY--',newY)
             //顶部上拉时
             if(newY > 0){
               this.currentIndex = 0;
+              console.log('curr--',this.currentIndex)
               return
             }
-            //滚动在中间范围时 list 25 izou23
+            //滚动在中间范围时
             for(let i=0;i< this.listHeight.length - 1;i++){
               let height1 = this.listHeight[i],
                   height2 = this.listHeight[i+1];
+
               if(-newY >= height1 && -newY < height2){
                 this.currentIndex = i
+                this.diff = height2 + newY
+                console.log('curr--',this.currentIndex)
                 return;
               }
             }
             //滚动在最底下超过最后一个的index时:
             // -2是因为一开始push进去一个0，this.listHeight.length - 1是最后一个的下标，所以-2才是快速入口最后一个的下标
             this.currentIndex = this.listHeight.length - 2;
+            console.log('curr--',this.currentIndex)
+          },
+
+          //滚动的title与fixed title重合时，fixed title上移
+          diff(newVal){
+
           },
         },
     }

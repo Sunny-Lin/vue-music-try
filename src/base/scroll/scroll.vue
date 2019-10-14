@@ -13,6 +13,10 @@
         type: Number,
         default: 1
       },
+      listenScroll: {
+        type: Boolean,
+        default: true
+      },
       click: {
         type: Boolean,
         default: true,
@@ -35,6 +39,15 @@
           probeType: this.probeType,
           click: this.click
         })
+
+        //是否监听滚动
+        if(this.listenScroll){
+          let me = this;
+          this.scroll.on('scroll',(pos) => {
+            me.$emit('scroll',pos)
+          })
+        }
+
       },
       refresh(){
          this.scroll && this.scroll.refresh();
